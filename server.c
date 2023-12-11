@@ -6,13 +6,13 @@
 /*   By: vda-conc <vda-conc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/12/07 14:40:25 by vda-conc          #+#    #+#             */
-/*   Updated: 2023/12/09 15:59:50 by vda-conc         ###   ########.fr       */
+/*   Updated: 2023/12/11 10:10:58 by vda-conc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minitalk.h"
 
-void	ft_bin_to_char(int signum, int *c)
+void	ft_bin_to_char(int signum, char *c)
 {
 	if (signum == SIGUSR1)
 		*c = (*c << 1) | 1;
@@ -22,26 +22,30 @@ void	ft_bin_to_char(int signum, int *c)
 
 void	sig_handler(int signum, siginfo_t *info, void *context)
 {
-	static int	c;
+	static char	c;
 	static int	i;
-	pid_t		client_pid;
+	static char	*str;
 
 	(void)context;
-	client_pid = info->si_pid;
 	ft_bin_to_char(signum, &c);
 	if (++i == 8)
 	{
 		i = 0;
 		if (c == '\0')
 		{
-			write(1, "\n", 1);
-			client_pid = 0;
+			ft_putstr_fd(str, 1);
+			ft_putchar_fd('\n', 1);
+			free(str);
+			str = NULL;
 			return ;
 		}
-		write(1, &c, 1);
+		if (!str)
+			str = ft_strdup(&c);
+		else
+			str = ft_strjoin(str, &c);
 		c = 0;
 	}
-	kill(client_pid, SIGUSR2);
+	kill(info->si_pid, SIGUSR2);
 }
 
 int	main(void)
